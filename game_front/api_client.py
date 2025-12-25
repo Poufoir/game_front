@@ -35,11 +35,11 @@ class ApiClient:
 
     def set_password(self, username: str, new_password: str) -> dict:
         return self._post(
-            "/auth/set-password", {"username": username, "new_password": new_password}
+            "/auth/set-password", {"username": username, "password": new_password}
         )
 
     def me(self, token: str) -> dict:
-        return self._get("/me", {"token": token})
+        return self._get("/users/me", {"token": token})
 
     def recap(self, token: str) -> dict:
         return self._get("/recap", {"token": token})

@@ -1,15 +1,15 @@
 from __future__ import annotations
 
+from nicegui import app, ui
 from starlette.responses import RedirectResponse
-from nicegui import ui, app
 
-from game_front.api_client import ApiClient
 from game_front.actions_panel import ActionsPanel
+from game_front.api_client import ApiClient
 
 API_BASE = "http://127.0.0.1:8000"  # mets IP du backend si autre machine
 api = ApiClient(API_BASE)
 
-AUTH_ENABLED = False
+AUTH_ENABLED = True
 
 RULES_TEXT = """
 ### Règles du jeu (récap)
@@ -94,6 +94,7 @@ def login_page() -> None:
                 return
 
             status = res.get("status")
+            print(f"login status: {status}")
             if status == "OK":
                 set_token(res["token"])
                 set_pending_username(None)
@@ -143,7 +144,7 @@ def set_password_page() -> None:
                 return
 
             try:
-                api.set_password(pending, a)
+                api.set_password(pending, str(a))
             except Exception as e:
                 msg.text = f"Erreur API: {e}"
                 return
