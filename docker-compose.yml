@@ -1,0 +1,10 @@
+services:
+  game_front:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: game_front
+    ports:
+      - "8501:8501"
+    environment:
+      - API_BASE=http://host.docker.internal:8000
