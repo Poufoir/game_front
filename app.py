@@ -5,6 +5,7 @@ from starlette.responses import RedirectResponse
 
 from game_front.actions_panel import ActionsPanel
 from game_front.api_client import ApiClient
+from game_front.recap_panel import RecapView
 
 API_BASE = "http://127.0.0.1:8000"  # mets IP du backend si autre machine
 api = ApiClient(API_BASE)
@@ -75,6 +76,7 @@ def login_page() -> None:
             .props("autocomplete=current-password")
             .classes("w-full")
         )
+        password.set_visibility(False)
 
         msg = ui.label().classes("text-sm text-red-600")
 
@@ -83,7 +85,7 @@ def login_page() -> None:
             u = (username.value or "").strip()
             p = password.value or ""
 
-            if not u or not p:
+            if not u:
                 msg.text = "Veuillez saisir un nom d'utilisateur et un mot de passe."
                 return
 
@@ -97,11 +99,14 @@ def login_page() -> None:
             print(f"login status: {status}")
             if status == "OK":
                 set_token(res["token"])
-                set_pending_username(None)
+                set_pending_username(u)
                 ui.navigate.to("/")
             elif status == "FIRST_LOGIN":
                 set_pending_username(u)
                 ui.navigate.to("/set-password")
+            elif status == "PASSWORD_REQUIRED":
+                set_pending_username(u)
+                password.set_visibility(True)
             elif status == "UNKNOWN_USER":
                 msg.text = "Utilisateur inconnu."
             else:
@@ -200,49 +205,11 @@ def main_page() -> None:
 
     with ui.tab_panels(tabs, value=tab_main).classes("w-full"):
         with ui.tab_panel(tab_rules):
+            RULES_TEXT = api.get_rules()
             ui.markdown(RULES_TEXT).classes("prose max-w-none")
 
         with ui.tab_panel(tab_main):
-            ui.label("Récapitulatif").classes("text-2xl font-bold mb-2")
-
-            status = ui.label("En attente").classes("text-sm text-gray-600 mb-3")
-
-            table_container = ui.column().classes("w-full")
-
-            def load_recap():
-                table_container.clear()
-                status.text = "Chargement..."
-
-                try:
-                    if AUTH_ENABLED:
-                        payload = api.recap(token)
-                    else:
-                        payload = {
-                            "rows": [
-                                {"round": 1, "player": "bob", "score": 10},
-                                {"round": 1, "player": "alice", "score": 7},
-                                {"round": 2, "player": "bob", "score": 18},
-                            ]
-                        }
-
-                    rows = payload.get("rows", [])
-
-                except Exception as e:
-                    status.text = f"Erreur : {e}"
-                    return
-
-                if not rows:
-                    status.text = "Aucune donnée"
-                    ui.label("Aucune donnée à afficher.").classes("text-sm").move(
-                        table_container
-                    )
-                    return
-
-                ui.table(rows=rows).classes("w-full").move(table_container)
-                status.text = "Chargé"
-
-            ui.button("Rafraîchir", on_click=load_recap).classes("mt-3")
-            load_recap()
+            RecapView(api, AUTH_ENABLED=AUTH_ENABLED)
 
         with ui.tab_panel(tab_actions):
             ActionsPanel(api)

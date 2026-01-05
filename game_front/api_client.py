@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import Union
+
 import requests
 
 
@@ -8,7 +10,7 @@ class ApiClient:
         self.base_url = base_url.rstrip("/")
         self.timeout_s = timeout_s
 
-    def _get(self, path: str, params: dict) -> dict:
+    def _get(self, path: str, params: dict) -> Union[dict, str]:
         r = requests.get(
             f"{self.base_url}{path}", params=params, timeout=self.timeout_s
         )
@@ -41,16 +43,17 @@ class ApiClient:
     def me(self, token: str) -> dict:
         return self._get("/users/me", {"token": token})
 
-    def recap(self, token: str) -> dict:
-        return self._get("/recap", {"token": token})
+    def recap(self) -> dict:
+        return self._get("/recap", {})
 
     def logout(self, token: str) -> dict:
         return self._post("/auth/logout", {"token": token})
 
-    def set_mode(self, mode: str) -> dict:
-        return
-        return self._post("/set-mode", {"mode": mode})
+    def set_mode(self, token: str, mode: str) -> dict:
+        return self._post("/users/set-mode", {"token": token, "mode": mode})
 
-    def set_action(self, action: str) -> dict:
-        return
-        return self._post("/set-action", {"action": action})
+    def set_action(self, token: str, action: str) -> dict:
+        return self._post("/users/set-action", {"token": token, "action": action})
+
+    def get_rules(self) -> str:
+        return self._get("/rules", {})

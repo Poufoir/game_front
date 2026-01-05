@@ -35,7 +35,6 @@ class ActionsPanel:
 
             with ui.row():
                 for mode, color in MODE_COLORS.items():
-
                     btn = ui.button(
                         mode, on_click=lambda m=mode: self.set_mode(m)
                     ).props(f"color={color}")
