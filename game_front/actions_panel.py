@@ -1,6 +1,7 @@
 from nicegui import ui
 
 from game_front.api_client import ApiClient
+from game_front.utils import get_token
 
 MODE_COLORS = {
     "Récolte": "green",
@@ -57,12 +58,14 @@ class ActionsPanel:
 
     def set_mode(self, mode: str):
         self.current_mode = mode
-        self.api.set_mode(mode)
+        token = get_token()
+        self.api.set_mode(token, mode)
         self._update_mode_styles()
 
     def set_action(self, action: str):
         self.current_action = action
-        self.api.set_action(action)
+        token = get_token()
+        self.api.set_action(token, action)
         self._update_action_styles()
 
     def _update_mode_styles(self):

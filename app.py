@@ -6,6 +6,7 @@ from starlette.responses import RedirectResponse
 from game_front.actions_panel import ActionsPanel
 from game_front.api_client import ApiClient
 from game_front.recap_panel import RecapView
+from game_front.utils import get_token
 
 API_BASE = "http://127.0.0.1:8000"  # mets IP du backend si autre machine
 api = ApiClient(API_BASE)
@@ -26,10 +27,6 @@ def set_token(token: str | None) -> None:
         app.storage.user["token"] = token
     else:
         app.storage.user.pop("token", None)
-
-
-def get_token() -> str | None:
-    return app.storage.user.get("token")
 
 
 def set_pending_username(username: str | None) -> None:
@@ -149,9 +146,11 @@ def set_password_page() -> None:
                 return
 
             try:
-                api.set_password(pending, str(a))
+                answer = api.set_password(pending, str(a))
+                print(f"set_password answer: {answer.get('status')}")
             except Exception as e:
                 msg.text = f"Erreur API: {e}"
+                print(f"Error setting password: {e}")
                 return
 
             set_pending_username(None)
