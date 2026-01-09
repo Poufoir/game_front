@@ -27,27 +27,49 @@ class RecapView:
 
         try:
             payload = self._get_payload()
-            recap = payload["recap"]
-            recap.sort(key=lambda x: x["round"])
-            columns = self._get_columns()
+
+            rows = self._build_rows_from_payload(payload)
+            print(rows)
+            rows.sort(key=lambda x: x["round"])
+
+            total_rows = self._build_total_rows(payload)
+
+            round_columns = self._get_columns()
+            total_columns = self._get_total_columns()
 
         except Exception as e:
             self.status.text = f"Erreur : {e}"
             return
 
-        if not recap:
+        if not rows:
             self.status.text = "Aucune donnée"
             ui.label("Aucune donnée à afficher.").classes("text-sm").move(
                 self.table_container
             )
             return
 
-        for round_num, rows in groupby(recap, key=lambda x: x["round"]):
-            ui.label(f"Round {round_num}").classes("text-h6").move(self.table_container)
+        # --- Tableau par round ---
+        for round_num, group in groupby(rows, key=lambda x: x["round"]):
+            ui.label(f"Round {round_num}").classes("text-h6 mt-4").move(
+                self.table_container
+            )
+
             ui.table(
-                columns=columns,
-                rows=list(rows),
+                columns=round_columns,
+                rows=list(group),
             ).move(self.table_container)
+
+        # --- Classement général ---
+        ui.separator().move(self.table_container)
+
+        ui.label("Classement général").classes("text-h5 mt-6").move(
+            self.table_container
+        )
+
+        ui.table(
+            columns=total_columns,
+            rows=total_rows,
+        ).move(self.table_container)
 
         self.status.text = "Chargé"
 
@@ -56,11 +78,24 @@ class RecapView:
             return self.api.recap()
 
         return {
-            "recap": [
-                {"round": 1, "player": "bob", "score": 10},
-                {"round": 1, "player": "alice", "score": 7},
-                {"round": 2, "player": "bob", "score": 18},
-            ]
+            "round_score": [
+                [
+                    ("Team A", 1, 200),
+                    ("Team B", 1, 200),
+                    ("Team C", 1, 200),
+                    ("Team D", 1, 200),
+                    ("Team A", 2, 400),
+                    ("Team B", 2, 400),
+                    ("Team C", 2, 400),
+                    ("Team D", 2, 400),
+                ]
+            ],
+            "total_score": {
+                "Team A": 600,
+                "Team B": 600,
+                "Team C": 600,
+                "Team D": 600,
+            },
         }
 
     @staticmethod
@@ -83,4 +118,38 @@ class RecapView:
                 "field": "score",
                 "sortable": True,
             },
+        ]
+
+    @staticmethod
+    def _get_total_columns():
+        return [
+            {"name": "player", "label": "Équipe", "field": "player", "sortable": True},
+            {
+                "name": "score",
+                "label": "Score total",
+                "field": "score",
+                "sortable": True,
+            },
+        ]
+
+    @staticmethod
+    def _build_rows_from_payload(payload):
+        print("Payload:", payload)
+        rows = []
+        for game in payload["round_score"]:
+            player, round_num, score = game
+            rows.append(
+                {
+                    "round": round_num,
+                    "player": player,
+                    "score": score,
+                }
+            )
+        return rows
+
+    @staticmethod
+    def _build_total_rows(payload):
+        return [
+            {"player": team, "score": total}
+            for team, total in payload["total_score"].items()
         ]
