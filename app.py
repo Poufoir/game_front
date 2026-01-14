@@ -97,7 +97,10 @@ def login_page() -> None:
             if status == "OK":
                 set_token(res["token"])
                 set_pending_username(u)
-                ui.navigate.to("/")
+                if u == "admin":
+                    ui.navigate.to("/admin")
+                else:
+                    ui.navigate.to("/")
             elif status == "FIRST_LOGIN":
                 set_pending_username(u)
                 ui.navigate.to("/set-password")
@@ -212,6 +215,45 @@ def main_page() -> None:
 
         with ui.tab_panel(tab_actions):
             ActionsPanel(api)
+
+
+@ui.page("/admin")
+def admin_page():
+    token = get_token()
+    if not token or get_pending_username() != "admin":
+        ui.navigate.to("/login")
+        return
+
+    data = api.admin_recap(token)
+    print(f"Admin recap data: {data}")
+    current_round = data["round"]
+    rounds_list, team_totals = data["players"]
+
+    ui.query("body").classes("bg-gray-100")
+
+    with ui.column().classes("max-w-4xl mx-auto p-6"):
+        ui.label(f"🎮 ADMIN – Tour actuel : {current_round}").classes(
+            "text-3xl font-bold mb-4"
+        )
+
+        # ---- Par round / par joueur ----
+        for person, rounds, money in rounds_list:
+            with ui.card().classes("p-4 mb-2"):
+                with ui.row().classes("w-full justify-between items-center"):
+                    ui.label(f"{person} : {money} €")
+
+        # ---- Totaux par équipe ----
+        with ui.card().classes("p-4 mt-4"):
+            ui.label("Totaux par équipe").classes("text-xl font-bold mb-2")
+            for team, total in team_totals.items():
+                ui.label(f"{team} : {total} €")
+
+        # ---- Bouton nouveau round ----
+        with ui.row().classes("mt-4 justify-between"):
+            ui.button(
+                "➕ Nouveau round",
+                on_click=lambda: api.admin_next_round(token=get_token()),
+            )
 
 
 if __name__ in {"__main__", "__mp_main__"}:

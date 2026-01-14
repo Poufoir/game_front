@@ -57,3 +57,12 @@ class ApiClient:
 
     def get_rules(self) -> str:
         return self._get("/rules", {})
+
+    def admin_recap(self, token: str) -> dict:
+        return self._get("/admin/dashboard", {"token": token})
+
+    def admin_next_round(self, token: str) -> dict:
+        return self._post("/admin/next-round", {"token": token})
+
+    def admin_delete_last_round(self, token: str) -> dict:
+        return self._post("/admin/delete-last-round", {"token": token})
