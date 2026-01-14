@@ -191,10 +191,6 @@ def main_page() -> None:
         if AUTH_ENABLED:
 
             def do_logout():
-                try:
-                    api.logout(token)
-                except Exception:
-                    pass
                 set_token(None)
                 ui.navigate.to("/login")
 
