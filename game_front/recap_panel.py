@@ -1,5 +1,3 @@
-from itertools import groupby
-
 from nicegui import ui
 
 from game_front.api_client import ApiClient
@@ -22,56 +20,57 @@ class RecapView:
         ui.button("Rafraîchir", on_click=self.load_recap).classes("mt-3")
 
     def load_recap(self):
-        self.table_container.clear()
         self.status.text = "Chargement..."
+
+        self.table_container.clear()
 
         try:
             payload = self._get_payload()
+            teams = payload.get("round_score", [])
 
-            rows = self._build_rows_from_payload(payload)
-            print(rows)
-            rows.sort(key=lambda x: x["round"])
+            if not teams:
+                self.status.text = "Aucune donnée"
+                return
 
-            total_rows = self._build_total_rows(payload)
+            rounds = sorted(
+                {r for team in teams for r in team["rounds"].keys()}, key=int
+            )
 
-            round_columns = self._get_columns()
-            total_columns = self._get_total_columns()
+            with self.table_container:
+                with ui.table(
+                    columns=[
+                        {"name": "team", "label": "Équipe", "field": "team"},
+                        *[
+                            {"name": f"r{r}", "label": f"Round {r}", "field": f"r{r}"}
+                            for r in rounds
+                        ],
+                        {"name": "total", "label": "Total", "field": "total"},
+                    ],
+                    rows=[],
+                ).classes(
+                    "w-full q-table--horizontal-separator q-table--vertical-separator"
+                ) as table:
+                    rows = []
+
+                    for team in teams:
+                        row = {"team": team["team"], "total": 0}
+
+                        last_value = 0
+
+                        for r in rounds:
+                            value = team["rounds"].get(r, last_value)
+                            row[f"r{r}"] = value
+                            last_value = value
+
+                        row["total"] = last_value
+                        rows.append(row)
+
+                    table.rows = rows
+
+            self.status.text = "OK"
 
         except Exception as e:
-            self.status.text = f"Erreur : {e}"
-            return
-
-        if not rows:
-            self.status.text = "Aucune donnée"
-            ui.label("Aucune donnée à afficher.").classes("text-sm").move(
-                self.table_container
-            )
-            return
-
-        # --- Tableau par round ---
-        for round_num, group in groupby(rows, key=lambda x: x["round"]):
-            ui.label(f"Round {round_num}").classes("text-h6 mt-4").move(
-                self.table_container
-            )
-
-            ui.table(
-                columns=round_columns,
-                rows=list(group),
-            ).move(self.table_container)
-
-        # --- Classement général ---
-        ui.separator().move(self.table_container)
-
-        ui.label("Classement général").classes("text-h5 mt-6").move(
-            self.table_container
-        )
-
-        ui.table(
-            columns=total_columns,
-            rows=total_rows,
-        ).move(self.table_container)
-
-        self.status.text = "Chargé"
+            self.status.text = f"Erreur: {e}"
 
     def _get_payload(self):
         if self.AUTH_ENABLED:
@@ -79,77 +78,9 @@ class RecapView:
 
         return {
             "round_score": [
-                [
-                    ("Team A", 1, 200),
-                    ("Team B", 1, 200),
-                    ("Team C", 1, 200),
-                    ("Team D", 1, 200),
-                    ("Team A", 2, 400),
-                    ("Team B", 2, 400),
-                    ("Team C", 2, 400),
-                    ("Team D", 2, 400),
-                ]
-            ],
-            "total_score": {
-                "Team A": 600,
-                "Team B": 600,
-                "Team C": 600,
-                "Team D": 600,
-            },
+                {"team": "Team A", "rounds": {"1": 0, "2": 300, "3": 600}},
+                {"team": "Team B", "rounds": {"1": 0, "2": 300, "3": 600}},
+                {"team": "Team C", "rounds": {"1": 0, "2": 300, "3": 600}},
+                {"team": "Team D", "rounds": {"1": 0, "2": 300, "3": 600}},
+            ]
         }
-
-    @staticmethod
-    def _get_columns():
-        return [
-            {
-                "name": "round",
-                "label": "Round",
-                "field": "round",
-                "sortable": True,
-            },
-            {
-                "name": "player",
-                "label": "Joueur",
-                "field": "player",
-            },
-            {
-                "name": "score",
-                "label": "Score",
-                "field": "score",
-                "sortable": True,
-            },
-        ]
-
-    @staticmethod
-    def _get_total_columns():
-        return [
-            {"name": "player", "label": "Équipe", "field": "player", "sortable": True},
-            {
-                "name": "score",
-                "label": "Score total",
-                "field": "score",
-                "sortable": True,
-            },
-        ]
-
-    @staticmethod
-    def _build_rows_from_payload(payload):
-        print("Payload:", payload)
-        rows = []
-        for game in payload["round_score"]:
-            player, round_num, score = game
-            rows.append(
-                {
-                    "round": round_num,
-                    "player": player,
-                    "score": score,
-                }
-            )
-        return rows
-
-    @staticmethod
-    def _build_total_rows(payload):
-        return [
-            {"player": team, "score": total}
-            for team, total in payload["total_score"].items()
-        ]
