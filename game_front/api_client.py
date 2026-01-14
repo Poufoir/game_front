@@ -32,6 +32,20 @@ class ApiClient:
             raise RuntimeError(detail)
         return r.json()
 
+    def _delete(self, path: str, params: dict) -> dict:
+        r = requests.delete(
+            f"{self.base_url}{path}",
+            params=params,  # ⬅️ PAS json=
+            timeout=self.timeout_s,
+        )
+        if r.status_code >= 400:
+            try:
+                detail = r.json().get("detail", r.text)
+            except Exception:
+                detail = r.text
+            raise RuntimeError(detail)
+        return r.json()
+
     def login(self, username: str, password: str) -> dict:
         return self._post("/auth/login", {"username": username, "password": password})
 
@@ -62,7 +76,7 @@ class ApiClient:
         return self._get("/admin/dashboard", {"token": token})
 
     def admin_next_round(self, token: str) -> dict:
-        return self._post("/admin/next-round", {"token": token})
+        return self._get("/admin/next-round", {"token": token})
 
     def admin_delete_last_round(self, token: str) -> dict:
-        return self._post("/admin/delete-last-round", {"token": token})
+        return self._delete("/admin/delete-last-round", {"token": token})

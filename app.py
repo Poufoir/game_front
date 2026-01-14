@@ -222,34 +222,50 @@ def admin_page():
 
     data = api.admin_recap(token)
     print(f"Admin recap data: {data}")
+
     current_round = data["round"]
-    rounds_list, team_totals = data["players"]
+    players = data["players"]
+    teams = data["money"]
 
     ui.query("body").classes("bg-gray-100")
 
-    with ui.column().classes("max-w-4xl mx-auto p-6"):
+    with ui.column().classes("max-w-5xl mx-auto p-6 gap-4"):
         ui.label(f"🎮 ADMIN – Tour actuel : {current_round}").classes(
             "text-3xl font-bold mb-4"
         )
+        ui.label("📋 Joueurs").classes("text-2xl font-bold")
 
-        # ---- Par round / par joueur ----
-        for person, rounds, money in rounds_list:
-            with ui.card().classes("p-4 mb-2"):
-                with ui.row().classes("w-full justify-between items-center"):
-                    ui.label(f"{person} : {money} €")
+        for p in players:
+            with ui.card().classes("p-4 w-full"):
+                ui.label(f"👤 {p['username']} — {p['team']}").classes("font-bold")
 
-        # ---- Totaux par équipe ----
-        with ui.card().classes("p-4 mt-4"):
-            ui.label("Totaux par équipe").classes("text-xl font-bold mb-2")
-            for team, total in team_totals.items():
-                ui.label(f"{team} : {total} €")
+                with ui.column().classes("pl-4 mt-2 gap-1"):
+                    for r in p["rounds"]:
+                        ui.label(
+                            f"Round {r['round']} | {r['mode']} | {r['action']} | 💰 {r['money']} €"
+                        ).classes("text-sm")
 
-        # ---- Bouton nouveau round ----
-        with ui.row().classes("mt-4 justify-between"):
+        ui.label("💰 Totaux par équipe").classes("text-2xl font-bold mt-6")
+
+        for team in teams:
+            with ui.card().classes("p-4"):
+                ui.label(f"🏷 {team['team']}").classes("font-bold")
+                ui.label(f"Total: {team['total']} €")
+
+                with ui.row().classes("gap-4 text-sm mt-2"):
+                    for round_id, amount in team["rounds"].items():
+                        ui.label(f"R{round_id}: {amount} €")
+
+        with ui.row().classes("mt-6 justify-between"):
             ui.button(
-                "➕ Nouveau round",
+                "➕ Lancer le round suivant",
                 on_click=lambda: api.admin_next_round(token=get_token()),
-            )
+            ).classes("bg-green-600 text-white")
+
+            ui.button(
+                "⏪ Supprimer le dernier round",
+                on_click=lambda: api.admin_delete_last_round(token=get_token()),
+            ).classes("bg-red-600 text-white")
 
 
 if __name__ in {"__main__", "__mp_main__"}:
