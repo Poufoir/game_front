@@ -221,7 +221,6 @@ def admin_page():
         return
 
     data = api.admin_recap(token)
-    print(f"Admin recap data: {data}")
 
     current_round = data["round"]
     players = data["players"]
