@@ -1,4 +1,4 @@
-from nicegui import ui
+from nicegui import run, ui
 
 from game_front.api_client import ApiClient
 from game_front.utils import get_token
@@ -87,3 +87,20 @@ class ActionsPanel:
             else:
                 btn.props(remove="unelevated text-color=white")
                 btn.props(f"color={ACTION_COLOR} outline icon=none")
+
+    async def refresh(self):
+        token = get_token()
+        if not token:
+            self.current_mode = None
+            self.current_action = None
+            self._update_mode_styles()
+            self._update_action_styles()
+            return
+
+        current_action = await run.io_bound(self.api.get_current_actions, token)
+        current_mode = await run.io_bound(self.api.get_current_mode, token)
+
+        self.current_mode = current_mode
+        self.current_action = current_action
+        self._update_mode_styles()
+        self._update_action_styles()

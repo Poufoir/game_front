@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import asyncio
+
 from nicegui import app, ui
 from starlette.responses import RedirectResponse
 
@@ -201,7 +203,10 @@ def main_page() -> None:
         tab_main = ui.tab("Tableau principal", icon="home")
         tab_actions = ui.tab("Actions", icon="gamepad")
 
-    with ui.tab_panels(tabs, value=tab_main).classes("w-full"):
+    actions_panel = None
+    panels = ui.tab_panels(tabs, value=tab_main).classes("w-full")
+
+    with panels:
         with ui.tab_panel(tab_rules):
             RULES_TEXT = api.get_rules()
             ui.markdown(RULES_TEXT).classes("prose max-w-none")
@@ -210,7 +215,13 @@ def main_page() -> None:
             RecapView(api, AUTH_ENABLED=AUTH_ENABLED)
 
         with ui.tab_panel(tab_actions):
-            ActionsPanel(api)
+            actions_panel = ActionsPanel(api)
+
+    def on_panel_change(e):
+        if e.value == "Actions" and actions_panel is not None:
+            asyncio.create_task(actions_panel.refresh())
+
+    panels.on_value_change(on_panel_change)
 
 
 @ui.page("/admin")

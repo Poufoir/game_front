@@ -88,3 +88,9 @@ class ApiClient:
 
     def get_player_names(self) -> dict:
         return self._get("/player_names", {})
+
+    def get_current_actions(self, token: str) -> dict:
+        return self._get("/users/current-action", {"token": token})
+
+    def get_current_mode(self, token: str) -> dict:
+        return self._get("/users/current-mode", {"token": token})
