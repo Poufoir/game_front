@@ -80,3 +80,11 @@ class ApiClient:
 
     def admin_delete_last_round(self, token: str) -> dict:
         return self._delete("/admin/delete-last-round", {"token": token})
+
+    def donate(self, username: str, amount: float, token: str) -> dict:
+        return self._get(
+            "/admin/donate", {"token": token, "username": username, "amount": amount}
+        )
+
+    def get_player_names(self) -> dict:
+        return self._get("/player_names", {})

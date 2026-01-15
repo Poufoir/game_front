@@ -232,42 +232,92 @@ def admin_page():
         ui.label(f"🎮 ADMIN – Tour actuel : {current_round}").classes(
             "text-3xl font-bold mb-4"
         )
-        with ui.row().classes("w-full gap-6 flex-nowrap"):
-            with ui.column().classes("w-2/3"):
-                ui.label("📋 Joueurs").classes("text-2xl font-bold")
-                for p in players:
-                    with ui.card().classes("p-4 w-full"):
-                        ui.label(f"👤 {p['username']} — {p['team']}").classes(
-                            "font-bold"
+        with ui.tabs().classes("w-full") as tabs:
+            recap_tab = ui.tab("📋 Récap")
+            donation_tab = ui.tab("💝 Don")
+
+        with ui.tab_panels(tabs, value=recap_tab).classes("w-full"):
+            with ui.tab_panel(recap_tab):
+                with ui.row().classes("w-full gap-6 flex-nowrap"):
+                    with ui.column().classes("w-2/3"):
+                        ui.label("📋 Joueurs").classes("text-2xl font-bold")
+                        for p in players:
+                            with ui.card().classes("p-4 w-full"):
+                                ui.label(f"👤 {p['username']} — {p['team']}").classes(
+                                    "font-bold"
+                                )
+
+                                with ui.column().classes("pl-4 mt-2 gap-1"):
+                                    for r in p["rounds"]:
+                                        ui.label(
+                                            f"Round {r['round']} | {r['mode']} | {r['action']} | 💰 {r['money']} €"
+                                        ).classes("text-sm")
+                    with ui.column().classes("w-1/3"):
+                        ui.label("💰 Totaux par équipe").classes(
+                            "text-2xl font-bold mt-6"
                         )
 
-                        with ui.column().classes("pl-4 mt-2 gap-1"):
-                            for r in p["rounds"]:
-                                ui.label(
-                                    f"Round {r['round']} | {r['mode']} | {r['action']} | 💰 {r['money']} €"
-                                ).classes("text-sm")
-            with ui.column().classes("w-1/3"):
-                ui.label("💰 Totaux par équipe").classes("text-2xl font-bold mt-6")
+                        for team in teams:
+                            with ui.card().classes("p-4"):
+                                ui.label(f"🏷 {team['team']}").classes("font-bold")
+                                ui.label(f"Total: {team['total']} €")
 
-                for team in teams:
-                    with ui.card().classes("p-4"):
-                        ui.label(f"🏷 {team['team']}").classes("font-bold")
-                        ui.label(f"Total: {team['total']} €")
+                                with ui.row().classes("gap-4 text-sm mt-2"):
+                                    for round_id, amount in team["rounds"].items():
+                                        ui.label(f"R{round_id}: {amount} €")
 
-                        with ui.row().classes("gap-4 text-sm mt-2"):
-                            for round_id, amount in team["rounds"].items():
-                                ui.label(f"R{round_id}: {amount} €")
+            with ui.tab_panel(donation_tab):
+                with ui.card().classes("max-w-md mx-auto p-6 gap-4"):
+                    ui.label("💝 Faire un don").classes("text-xl font-bold")
+                    player_names = api.get_player_names()
+                    player_input = ui.select(
+                        player_names,
+                        label="Joueur",
+                        with_input=True,
+                    ).classes("w-full")
 
-        with ui.row().classes("mt-6 justify-between"):
-            ui.button(
-                "➕ Lancer le round suivant",
-                on_click=lambda: api.admin_next_round(token=get_token()),
-            ).classes("bg-green-600 text-white")
+                    amount_input = ui.number(
+                        label="Montant",
+                        min=0,
+                        step=5,
+                        format="%.0f",
+                    ).classes("w-full")
 
-            ui.button(
-                "⏪ Supprimer le dernier round",
-                on_click=lambda: api.admin_delete_last_round(token=get_token()),
-            ).classes("bg-red-600 text-white")
+                    result = ui.label()
+
+                    def send_donation():
+                        player = player_input.value
+                        amount = int(amount_input.value or 0)
+
+                        if not player or amount <= 0:
+                            result.text = "❌ Veuillez remplir tous les champs"
+                            result.classes("text-red-600")
+                            return
+
+                        api.donate(
+                            token=get_token(),
+                            username=player,
+                            amount=amount,
+                        )
+
+                        result.text = f"✅ {amount}€ donné par {player}"
+                        result.classes("text-green-600")
+
+                        amount_input.value = None
+
+                    ui.button("💝 Valider le don", on_click=send_donation).classes(
+                        "bg-pink-600 text-white w-full"
+                    )
+                with ui.row().classes("mt-6 justify-between"):
+                    ui.button(
+                        "➕ Lancer le round suivant",
+                        on_click=lambda: api.admin_next_round(token=get_token()),
+                    ).classes("bg-green-600 text-white")
+
+                    ui.button(
+                        "⏪ Supprimer le dernier round",
+                        on_click=lambda: api.admin_delete_last_round(token=get_token()),
+                    ).classes("bg-red-600 text-white")
 
 
 if __name__ in {"__main__", "__mp_main__"}:
