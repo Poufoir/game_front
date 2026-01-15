@@ -228,32 +228,35 @@ def admin_page():
 
     ui.query("body").classes("bg-gray-100")
 
-    with ui.column().classes("max-w-5xl mx-auto p-6 gap-4"):
+    with ui.column().classes("max-w-7xl mx-auto p-6 gap-4"):
         ui.label(f"🎮 ADMIN – Tour actuel : {current_round}").classes(
             "text-3xl font-bold mb-4"
         )
-        ui.label("📋 Joueurs").classes("text-2xl font-bold")
+        with ui.row().classes("w-full gap-6 flex-nowrap"):
+            with ui.column().classes("w-2/3"):
+                ui.label("📋 Joueurs").classes("text-2xl font-bold")
+                for p in players:
+                    with ui.card().classes("p-4 w-full"):
+                        ui.label(f"👤 {p['username']} — {p['team']}").classes(
+                            "font-bold"
+                        )
 
-        for p in players:
-            with ui.card().classes("p-4 w-full"):
-                ui.label(f"👤 {p['username']} — {p['team']}").classes("font-bold")
+                        with ui.column().classes("pl-4 mt-2 gap-1"):
+                            for r in p["rounds"]:
+                                ui.label(
+                                    f"Round {r['round']} | {r['mode']} | {r['action']} | 💰 {r['money']} €"
+                                ).classes("text-sm")
+            with ui.column().classes("w-1/3"):
+                ui.label("💰 Totaux par équipe").classes("text-2xl font-bold mt-6")
 
-                with ui.column().classes("pl-4 mt-2 gap-1"):
-                    for r in p["rounds"]:
-                        ui.label(
-                            f"Round {r['round']} | {r['mode']} | {r['action']} | 💰 {r['money']} €"
-                        ).classes("text-sm")
+                for team in teams:
+                    with ui.card().classes("p-4"):
+                        ui.label(f"🏷 {team['team']}").classes("font-bold")
+                        ui.label(f"Total: {team['total']} €")
 
-        ui.label("💰 Totaux par équipe").classes("text-2xl font-bold mt-6")
-
-        for team in teams:
-            with ui.card().classes("p-4"):
-                ui.label(f"🏷 {team['team']}").classes("font-bold")
-                ui.label(f"Total: {team['total']} €")
-
-                with ui.row().classes("gap-4 text-sm mt-2"):
-                    for round_id, amount in team["rounds"].items():
-                        ui.label(f"R{round_id}: {amount} €")
+                        with ui.row().classes("gap-4 text-sm mt-2"):
+                            for round_id, amount in team["rounds"].items():
+                                ui.label(f"R{round_id}: {amount} €")
 
         with ui.row().classes("mt-6 justify-between"):
             ui.button(
