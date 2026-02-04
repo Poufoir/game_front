@@ -44,7 +44,6 @@ class RecapView:
                             {"name": f"r{r}", "label": f"Round {r}", "field": f"r{r}"}
                             for r in rounds
                         ],
-                        {"name": "total", "label": "Total", "field": "total"},
                     ],
                     rows=[],
                 ).classes(
@@ -53,16 +52,14 @@ class RecapView:
                     rows = []
 
                     for team in teams:
-                        row = {"team": team["team"], "total": 0}
+                        row = {"team": team["team"]}
 
                         last_value = 0
 
                         for r in rounds:
                             value = team["rounds"].get(r, last_value)
                             row[f"r{r}"] = value
-                            last_value = value
 
-                        row["total"] = last_value
                         rows.append(row)
 
                     table.rows = rows
