@@ -49,7 +49,14 @@ class ActionsPanel:
             )
 
             with ui.row():
-                for action in ["Pilier", "Cailloux"]:
+                for action in [
+                    "Chant des héros",
+                    "Entraînement physique et mental",
+                    "Aider les paysans",
+                    "Repérage des marchandises",
+                    "Marché Noir",
+                    "Champ de bataille",
+                ]:
                     btn = ui.button(
                         action, on_click=lambda a=action: self.set_action(a)
                     ).props(f"color={ACTION_COLOR}")
