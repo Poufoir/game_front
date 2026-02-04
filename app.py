@@ -180,6 +180,7 @@ def main_page() -> None:
             me = api.me(token)
             username = me["username"]
             team = me.get("team", "N/A")
+            enigme = me.get("riddle", False)
         except Exception:
             set_token(None)
             ui.navigate.to("/login")
@@ -206,6 +207,7 @@ def main_page() -> None:
         tab_rules = ui.tab("Règles", icon="info")
         tab_main = ui.tab("Tableau principal", icon="home")
         tab_actions = ui.tab("Actions", icon="gamepad")
+        tab_enigme = ui.tab("Énigme", icon="quiz")
 
     actions_panel = None
     panels = ui.tab_panels(tabs, value=tab_main).classes("w-full")
@@ -220,6 +222,11 @@ def main_page() -> None:
 
         with ui.tab_panel(tab_actions):
             actions_panel = ActionsPanel(api)
+
+        with ui.tab_panel(tab_enigme):
+            ui.markdown(
+                f"### Énigme\n\n{enigme if enigme else 'Aucune énigme disponible pour le moment.'}"
+            ).classes("prose max-w-none")
 
     def on_panel_change(e):
         if e.value == "Actions" and actions_panel is not None:
