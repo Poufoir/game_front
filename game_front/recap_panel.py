@@ -26,6 +26,7 @@ class RecapView:
 
         try:
             payload = self._get_payload()
+            full_total = payload.get("total", 0)
             teams = payload.get("round_score", [])
 
             if not teams:
@@ -63,6 +64,10 @@ class RecapView:
                         rows.append(row)
 
                     table.rows = rows
+                with ui.row().classes("justify-end mt-2"):
+                    ui.label(
+                        f"Total général pour les tribus principales: {full_total}"
+                    ).classes("text-lg font-semibold")
 
             self.status.text = "OK"
 
