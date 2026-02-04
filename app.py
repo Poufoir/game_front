@@ -179,6 +179,7 @@ def main_page() -> None:
         try:
             me = api.me(token)
             username = me["username"]
+            team = me.get("team", "N/A")
         except Exception:
             set_token(None)
             ui.navigate.to("/login")
@@ -186,9 +187,12 @@ def main_page() -> None:
     else:
         token = None
         username = "DEV_MODE"
+        team = "DEV_TEAM"
 
     with ui.header().classes("items-center justify-between"):
-        ui.label(f"Game UI — utilisateur: {username}").classes("text-lg font-semibold")
+        ui.label(f"Game UI - utilisateur: {username} — Équipe: {team}").classes(
+            "text-lg font-semibold"
+        )
 
         if AUTH_ENABLED:
 
