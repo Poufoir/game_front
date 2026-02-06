@@ -247,6 +247,8 @@ def admin_page():
     current_round = data["round"]
     players = data["players"]
     teams = data["money"]
+    riddles = data.get("riddles", [])
+    riddles_by_team = {r["team"]: r.get("riddles", {}) for r in riddles}
 
     ui.query("body").classes("bg-gray-100")
 
@@ -280,13 +282,54 @@ def admin_page():
                         )
 
                         for team in teams:
+                            team_name = team["team"]
+                            team_riddles = riddles_by_team.get(team_name, {})
+
                             with ui.card().classes("p-4"):
-                                ui.label(f"🏷 {team['team']}").classes("font-bold")
+                                ui.label(f"🏷 {team_name}").classes("font-bold")
                                 ui.label(f"Total: {team['total']} €")
 
                                 with ui.row().classes("gap-4 text-sm mt-2"):
                                     for round_id, amount in team["rounds"].items():
                                         ui.label(f"R{round_id}: {amount} €")
+
+                                ui.separator().classes("my-3")
+                                ui.label("🧩 Énigmes").classes("font-bold")
+
+                                def render_riddle(kind: str, label: str):
+                                    info = team_riddles.get(kind)
+                                    if not info:
+                                        ui.label(f"{label}: —").classes(
+                                            "text-sm text-gray-500"
+                                        )
+                                        return
+
+                                    solved = int(info.get("solved") or 0)
+                                    solved_round = info.get("solved_round")
+                                    failed = info.get("failed_attempts") or 0
+                                    max_a = info.get("max_attempts")
+                                    remaining = info.get("attempts_remaining")
+
+                                    if max_a is None:
+                                        ui.label(f"{label}: ⏳ en attente").classes(
+                                            "text-sm text-gray-500"
+                                        )
+                                        return
+
+                                    if solved:
+                                        ui.label(
+                                            f"{label}: ✅ résolue (R{solved_round}) | "
+                                            f"Essais : {failed}/{max_a}"
+                                        ).classes("text-sm")
+                                    else:
+                                        ui.label(
+                                            f"{label}: ❌ non résolue | "
+                                            f"Essais : {failed}/{max_a} "
+                                            f"({remaining} restants)"
+                                        ).classes("text-sm")
+
+                                render_riddle("GENERAL", "Générale")
+                                render_riddle("TEAM", "Équipe")
 
             with ui.tab_panel(donation_tab):
                 player_names = api.get_player_names()
