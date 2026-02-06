@@ -289,9 +289,12 @@ def admin_page():
                                         ui.label(f"R{round_id}: {amount} €")
 
             with ui.tab_panel(donation_tab):
+                player_names = api.get_player_names()
+
+                # --- DON ---
                 with ui.card().classes("max-w-md mx-auto p-6 gap-4"):
                     ui.label("💝 Faire un don").classes("text-xl font-bold")
-                    player_names = api.get_player_names()
+
                     player_input = ui.select(
                         player_names,
                         label="Joueur",
@@ -305,15 +308,15 @@ def admin_page():
                         format="%.0f",
                     ).classes("w-full")
 
-                    result = ui.label()
+                    donation_result = ui.label()
 
                     def send_donation():
                         player = player_input.value
                         amount = int(amount_input.value or 0)
 
                         if not player or amount <= 0:
-                            result.text = "❌ Veuillez remplir tous les champs"
-                            result.classes("text-red-600")
+                            donation_result.text = "❌ Veuillez remplir tous les champs"
+                            donation_result.classes("text-red-600")
                             return
 
                         api.donate(
@@ -322,14 +325,99 @@ def admin_page():
                             amount=amount,
                         )
 
-                        result.text = f"✅ {amount}€ donné par {player}"
-                        result.classes("text-green-600")
+                        donation_result.text = f"✅ {amount}€ donné par {player}"
+                        donation_result.classes("text-green-600")
 
                         amount_input.value = None
 
                     ui.button("💝 Valider le don", on_click=send_donation).classes(
                         "bg-pink-600 text-white w-full"
                     )
+
+                with ui.card().classes("max-w-md mx-auto p-6 gap-4 mt-6"):
+                    ui.label("🧩 Gérer une énigme").classes("text-xl font-bold")
+
+                    riddle_player_input = ui.select(
+                        player_names,
+                        label="Joueur",
+                        with_input=True,
+                    ).classes("w-full")
+
+                    riddle_state_input = ui.select(
+                        ["TEAM", "GENERAL"],
+                        value="TEAM",
+                        label="Type d'énigme",
+                    ).classes("w-full")
+
+                    riddle_result = ui.label()
+
+                    def apply_result_style(ok: bool):
+                        riddle_result.classes(remove="text-red-600 text-green-600")
+                        riddle_result.classes(
+                            "text-green-600" if ok else "text-red-600"
+                        )
+
+                    def validate_riddle():
+                        player = riddle_player_input.value
+                        state = riddle_state_input.value
+
+                        if not player:
+                            riddle_result.text = "❌ Veuillez choisir un joueur"
+                            apply_result_style(False)
+                            return
+
+                        try:
+                            api.riddle_done(
+                                token=get_token(),
+                                player=player,
+                                state=state,
+                            )
+
+                            riddle_result.text = (
+                                f"✅ Énigme {state} validée pour {player}"
+                            )
+                            apply_result_style(True)
+                            riddle_player_input.value = None
+
+                        except Exception as e:
+                            riddle_result.text = f"❌ Erreur: {e}"
+                            apply_result_style(False)
+
+                    def fail_riddle():
+                        player = riddle_player_input.value
+                        state = riddle_state_input.value
+
+                        if not player:
+                            riddle_result.text = "❌ Veuillez choisir un joueur"
+                            apply_result_style(False)
+                            return
+
+                        try:
+                            api.riddle_failed(
+                                token=get_token(),
+                                player=player,
+                                state=state,
+                            )
+
+                            riddle_result.text = (
+                                f"⚠️ Échec enregistré ({state}) pour {player}"
+                            )
+                            apply_result_style(False)
+
+                        except Exception as e:
+                            riddle_result.text = f"❌ Erreur: {e}"
+                            apply_result_style(False)
+
+                    ui.button(
+                        "✅ Valider l'énigme",
+                        on_click=validate_riddle,
+                    ).classes("bg-green-600 text-white w-full")
+
+                    ui.button(
+                        "⚠️ Enregistrer un échec",
+                        on_click=fail_riddle,
+                    ).classes("bg-red-600 text-white w-full")
+
                 with ui.row().classes("mt-6 justify-between"):
                     ui.button(
                         "➕ Lancer le round suivant",

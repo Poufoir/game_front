@@ -94,3 +94,13 @@ class ApiClient:
 
     def get_current_mode(self, token: str) -> dict:
         return self._get("/users/current-mode", {"token": token})
+
+    def riddle_done(self, token: str, player: str, state: str) -> dict:
+        return self._get(
+            "/admin/riddle-done", {"token": token, "player": player, "state": state}
+        )
+
+    def riddle_failed(self, token: str, player: str, state: str) -> dict:
+        return self._get(
+            "/admin/riddle-failed", {"token": token, "player": player, "state": state}
+        )
